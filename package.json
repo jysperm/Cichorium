@@ -1,0 +1,33 @@
+{
+  "name": "cichorium",
+  "version": "0.1.0",
+  "description": "Just a copy of express in coffee script.",
+  "homepage": "https://github.com/jysperm/cichorium",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/jysperm/cichorium.git"
+  },
+  "contributors": [
+    {
+      "name": "jysperm",
+      "email": "jysperm@gmail.com",
+      "url": "http://jysperm.me"
+    }
+  ],
+  "scripts": {
+    "test": "COV_TEST=true ./node_modules/.bin/mocha --compilers coffee:coffee-script/register --require test/support/env --reporter node_modules/mocha-reporter-cov-summary -- test/*.test.coffee",
+    "test-only": "./node_modules/.bin/mocha --compilers coffee:coffee-script/register --require test/support/env -- test/*.test.coffee",
+    "test-cov-html": "COV_TEST=true ./node_modules/.bin/mocha --compilers coffee:coffee-script/register --require test/support/env --reporter html-cov -- test/*.test.coffee > coverage-reporter.html"
+  },
+  "dependencies": {
+    "coffee-script": "^1.7.1"
+  },
+  "devDependencies": {
+    "mocha": "^2.0.0",
+    "chai": "^1.9.2",
+    "coffee-coverage": "^0.4.2",
+    "supertest": "^0.14.0",
+    "mocha-reporter-cov-summary": "^0.1.0"
+  }
+}
