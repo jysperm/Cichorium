@@ -21,7 +21,9 @@
     "test-cov-html": "COV_TEST=true ./node_modules/.bin/mocha --compilers coffee:coffee-script/register --require test/support/env --reporter html-cov -- test/*.test.coffee > coverage-reporter.html"
   },
   "dependencies": {
-    "coffee-script": "^1.7.1"
+    "underscore": "^1.7.0",
+    "coffee-script": "^1.7.1",
+    "async": "^0.9.0"
   },
   "devDependencies": {
     "mocha": "^2.0.0",
