@@ -19,8 +19,7 @@ exports.send = (status, data) ->
   unless _.isNumber status
     [status, data] = [null, status]
 
-  if status
-    @statusCode = status
+  @statusCode = status if status
 
   @end data
 
@@ -30,14 +29,23 @@ exports.json = (status, data) ->
   unless _.isNumber status
     [status, data] = [null, status]
 
-  if status
-    @statusCode = status
+  @statusCode = status if status
 
   @header 'Content-Type', 'application/json'
   @send JSON.stringify data
 
+# res.redirect status, url
+# res.redirect url
+exports.redirect = (status, url) ->
+  unless _.isNumber status
+    [status, url] = [302, status]
+
+  @statusCode = status
+  @header 'Location', url
+  @send()
+
 exports.cookie = (name, value, options) ->
 
-exports.redirect = (status, url) ->
+exports.clearCookie = (name, options) ->
 
 exports.render = (view, view_data, callback) ->

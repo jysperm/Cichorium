@@ -105,3 +105,17 @@ describe 'response', ->
       .end (err, res) ->
         res.body.result.should.be.equal 'success'
         done err
+
+  describe 'redirect', ->
+    it 'should success', (done) ->
+      app = cichorium()
+
+      app.use (req, res) ->
+        res.redirect '/account'
+
+      supertest app
+      .get '/'
+      .expect 302
+      .end (err, res) ->
+        res.headers.location.should.be.equal '/account'
+        done err
