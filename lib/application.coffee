@@ -1,5 +1,6 @@
 async = require 'async'
 http = require 'http'
+util = require 'util'
 _ = require 'underscore'
 
 exports.init = ->
@@ -40,14 +41,33 @@ exports.handle = (req, res, next) ->
   unless next
     next = ->
 
-  async.eachSeries @stack, (layer, callback) ->
+  matched_stack = _.filter @stack, (layer) ->
     for match in layer.match_stack
       unless match req
-        return callback()
+        return false
 
-    layer req, res, callback
+    return true
 
-  , next
+  if _.isEmpty matched_stack
+    res.statusCode = 404
+    res.header 'Content-Type', 'text/html; charset=utf-8'
+    return res.end "Cannot #{req.method} #{req.url}\n"
+
+  async.eachSeries matched_stack, (layer, callback) ->
+    try
+      layer req, res, callback
+    catch err
+      callback err
+
+  , (err) ->
+    if err
+      res.statusCode = 500
+      res.send util.inspect err
+    else
+      unless res.finished and !socket.writable
+        res.end()
+
+    next()
 
 exports.listen = (port, callback) ->
   server = http.createServer @

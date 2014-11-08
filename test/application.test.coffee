@@ -116,3 +116,63 @@ describe 'application', ->
         .end (err, res) ->
           res.text.should.be.equal 'post of /path'
           done err
+
+  describe 'handle', ->
+    it 'should break when error', (done) ->
+      app = cichorium()
+      agent = supertest.agent app
+
+      app.use (req, res, next) ->
+        next new Error 'err!'
+
+      app.use (req, res, next) ->
+        req.should.not.exist
+
+      agent.get '/'
+      .expect 500
+      .end (err, res) ->
+        res.text.should.be.equal '[Error: err!]'
+        done err
+
+    it 'should catch exception thrown in middleware', (done) ->
+      app = cichorium()
+      agent = supertest.agent app
+
+      app.use (req, res, next) ->
+        throw new Error 'err!'
+
+      app.use (req, res, next) ->
+        req.should.not.exist
+
+      agent.get '/'
+      .expect 500
+      .end (err, res) ->
+        res.text.should.be.equal '[Error: err!]'
+        done err
+
+    it 'should 404 when no middleware matched', (done) ->
+      app = cichorium()
+      agent = supertest.agent app
+
+      app.use '/p', (req, res) ->
+        res.send 'sub path'
+
+      agent.get '/'
+      .expect 404
+      .end (err, res) ->
+        res.text.should.be.equal 'Cannot GET /\n'
+        done err
+
+    it 'should end request if middleware did not', (done) ->
+      app = cichorium()
+      agent = supertest.agent app
+
+      app.use (req, res, next) ->
+        res.header 'X-Header', 'value'
+        next()
+
+      agent.get '/'
+      .expect 200
+      .end (err, res) ->
+        res.headers['x-header'].should.be.equal 'value'
+        done err
