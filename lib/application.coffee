@@ -32,7 +32,7 @@ exports.useMethod = (method, args...) ->
 
   exports.use.apply @, [layer].concat args
 
-['GET', 'POST', 'HEAD', 'OPTIONS'].forEach (method) ->
+['GET', 'POST', 'PUT', 'HEAD', 'DELETE', 'OPTIONS', 'PATCH'].forEach (method) ->
   exports[method.toLowerCase()] = ->
     param = [method].concat _.toArray arguments
     exports.useMethod.apply @, param
