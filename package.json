@@ -1,35 +1,32 @@
 {
   "name": "cichorium",
-  "version": "0.1.0",
-  "description": "Just a copy of express in coffee script.",
-  "homepage": "https://github.com/jysperm/cichorium",
+  "version": "0.2.0",
+  "description": "Routing framework based on Promise using CoffeeScript",
+  "homepage": "https://github.com/jysperm/Cichorium",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/jysperm/cichorium.git"
+    "url": "https://github.com/jysperm/Cichorium.git"
   },
   "contributors": [
     {
       "name": "jysperm",
       "email": "jysperm@gmail.com",
-      "url": "http://jysperm.me"
+      "url": "https://jysperm.me"
     }
   ],
   "scripts": {
-    "test": "COV_TEST=true ./node_modules/.bin/mocha --compilers coffee:coffee-script/register --require test/support/env --reporter node_modules/mocha-reporter-cov-summary -- test/*.test.coffee",
-    "test-only": "./node_modules/.bin/mocha --compilers coffee:coffee-script/register --require test/support/env -- test/*.test.coffee",
-    "test-cov-html": "COV_TEST=true ./node_modules/.bin/mocha --compilers coffee:coffee-script/register --require test/support/env --reporter html-cov -- test/*.test.coffee > coverage-reporter.html"
+    "test": "mocha --compilers coffee:coffee-script/register --require test/env -- test/*.test.coffee"
   },
   "dependencies": {
-    "underscore": "^1.7.0",
+    "async-q": "^0.2.2",
     "coffee-script": "^1.7.1",
-    "async": "^0.9.0"
+    "lodash": "^3.8.0",
+    "q": "^1.2.0"
   },
   "devDependencies": {
     "mocha": "^2.0.0",
     "chai": "^1.9.2",
-    "coffee-coverage": "^0.4.2",
-    "supertest": "^0.14.0",
-    "mocha-reporter-cov-summary": "^0.1.0"
+    "supertest": "^0.14.0"
   }
 }

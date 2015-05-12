@@ -1,11 +1,9 @@
-{defineGetter} = require './utils'
+{IncomingMessage} = require 'http'
+_ = require 'lodash'
 
-exports.param = (name, default_value) ->
-  param = @params ? {}
-  query = @query ? {}
-  body = @body ? {}
+module.exports = class Request extends IncomingMessage
+  constructor: (req) ->
+    _.extend @, req
 
-  return param[name] ? query[name] ? body[name] ? default_value
-
-defineGetter exports, 'ip', ->
-  return @connection.remoteAddress
+  ip: ->
+    return @connection.remoteAddress

@@ -1,51 +1,48 @@
-_ = require 'underscore'
+{ServerResponse} = require 'http'
+_ = require 'lodash'
 
-# res.header name, value
-# res.header object
-exports.header = (name, value) ->
-  headers = name
+module.exports = class Response extends ServerResponse
+  constructor: (req) ->
+    _.extend @, req
 
-  unless _.isObject headers
-    headers = {}
-    headers[name] = value
+  # res.header name, value
+  # res.header object
+  header: (name, value) ->
+    headers = name
 
-  for name, value of headers
-    @setHeader name, value
+    unless _.isObject headers
+      headers = {}
+      headers[name] = value
 
-# res.send status, data
-# res.send status
-# res.send data
-exports.send = (status, data) ->
-  unless _.isNumber status
-    [status, data] = [null, status]
+    for name, value of headers
+      @setHeader name, value
 
-  @statusCode = status if status
+  # res.send status, data
+  # res.send status
+  # res.send data
+  send: (status, data) ->
+    unless !status or _.isNumber status
+      [status, data] = [null, status]
 
-  @end data
+    if status
+      @statusCode = status
 
-# res.json status, object
-# res.json object
-exports.json = (status, data) ->
-  unless _.isNumber status
-    [status, data] = [null, status]
+    @end data
 
-  @statusCode = status if status
+  # res.json status, object
+  # res.json object
+  json: (status, data) ->
+    @header 'Content-Type', 'application/json'
+    @send status, JSON.stringify data
 
-  @header 'Content-Type', 'application/json'
-  @send JSON.stringify data
+  # res.redirect status, url
+  # res.redirect url
+  redirect: (status, url) ->
+    @header 'Location', url
+    @send status ? 302
 
-# res.redirect status, url
-# res.redirect url
-exports.redirect = (status, url) ->
-  unless _.isNumber status
-    [status, url] = [302, status]
+  cookie: (name, value, options) ->
 
-  @statusCode = status
-  @header 'Location', url
-  @send()
+  clearCookie: (name, options) ->
 
-exports.cookie = (name, value, options) ->
-
-exports.clearCookie = (name, options) ->
-
-exports.render = (view, view_data, callback) ->
+  render: (view, view_data) ->

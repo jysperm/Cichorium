@@ -1,4 +1,4 @@
-describe 'application', ->
+describe 'cichorium', ->
   cichorium = require '../index'
 
   describe 'use', ->

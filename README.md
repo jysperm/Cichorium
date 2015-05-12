@@ -1,21 +1,27 @@
-## Cichorium
-Just a copy of express in coffee script.
+# Cichorium
+Routing framework based on Promise using CoffeeScript.
 
-### Usage
+## Usage
 
     cichorium = require 'cichorium'
     app = cichorium()
 
-    app.get '/', (req, res) ->
-      res.json 200,
-        hello: 'world'
+    app.use '/account', (req, res) ->
+      Account.authenticate(req.cookies['token']).then (account) ->
+        req.account = account
 
-    app.use (req, res) ->
-      res.send 404, 'Not found'
+    app.get '/account/dashboard', (req, res) ->
+      res.json 200,
+        hello: req.account?.name
+
+    app.catch (err) ->
+      res.send 500, err.message
 
     app.listen 3000
 
-### Todo
+## TODO
 
 * param in url, prepare of param
 * custom error handler
+* render
+* send and render with promise
