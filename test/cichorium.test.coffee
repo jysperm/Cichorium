@@ -1,71 +1,92 @@
 describe 'cichorium', ->
-  cichorium = require '../index'
+  describe '#constructor', ->
+    it 'default routes', (done) ->
+      app = new Cichorium()
 
-  describe 'use', ->
-    it 'should work with single fn', (done) ->
-      app = cichorium()
+      test(app).get '/'
+      .end (err, res) ->
+        res.statusCode.should.be.equal 404
+        res.text.should.be.equal 'Cannot GET /'
+        done err
+
+    it 'default error handling', (done) ->
+      app = new Cichorium()
+
+      app.use ->
+        throw new Error 'Expected error'
+
+      test(app).get '/'
+      .end (err, res) ->
+        res.statusCode.should.be.equal 500
+        res.text.should.be.equal 'Expected error'
+        done err
+
+  describe '#use', ->
+    it 'single middleware', (done) ->
+      app = new Cichorium()
 
       app.use (req, res) ->
-        res.end 'response content'
+        res.send 'response content'
 
-      supertest app
-      .get '/'
+      test(app).get '/'
       .end (err, res) ->
         res.text.should.be.equal 'response content'
         done err
 
-    it 'should work with multi fn', (done) ->
-      app = cichorium()
-      fn_log = []
+    it 'multiple middlewares', (done) ->
+      app = new Cichorium()
+      executed_middlewares = []
 
-      app.use (req, res, next) ->
-        fn_log.push 'fn1'
-        next()
+      app.use (req, res) ->
+        Q.delay(5).then ->
+          executed_middlewares.push 1
 
-      app.use (req, res, next) ->
-        fn_log.push 'fn2'
-        res.end 'response content'
-        next()
+      app.use (req, res) ->
+        executed_middlewares.push 2
+        res.send 'response content'
 
-      app.use (req, res, next) ->
-        fn_log.push 'fn3'
-        next()
+      app.use (req, res) ->
+        executed_middlewares.push 3
 
-      supertest app
-      .get '/'
+      test(app).get '/'
       .end (err, res) ->
         res.text.should.be.equal 'response content'
-        fn_log.should.be.eql ['fn1', 'fn2', 'fn3']
+        executed_middlewares.should.be.eql [1, 2, 3]
         done err
 
-    describe 'should work with prefix', ->
-      app = cichorium()
-      agent = supertest.agent app
+  describe '#use with prefix', (done) ->
+    app = new Cichorium()
 
-      before ->
-        app.use '/p', (req, res) ->
-          res.end 'sub path'
+    before ->
+      app.use '/user', (req, res) ->
+        res.send 'user'
 
-        app.use (req, res) ->
-          res.end 'index'
+      app.use /^\/order/, (req, res) ->
+        res.send 'order'
 
-      it 'GET /p', (done) ->
-        agent.get '/p'
-        .end (err, res) ->
-          res.text.should.be.equal 'sub path'
-          done err
+      app.use (req, res) ->
+        res.send 'index'
 
-      it 'GET /', (done) ->
-        agent.get '/'
-        .end (err, res) ->
-          res.text.should.be.equal 'index'
-          done err
+    it 'GET /', (done) ->
+      test(app).get '/'
+      .end (err, res) ->
+        res.text.should.be.equal 'index'
+        done err
 
-  describe 'useMethod', ->
+    it 'GET /user', (done) ->
+      test(app).get '/user'
+      .end (err, res) ->
+        res.text.should.be.equal 'user'
+        done err
+
+    it 'GET /order', (done) ->
+      test(app).get '/order'
+      .end (err, res) ->
+        res.text.should.be.equal 'order'
+        done err
+
+  describe.skip 'useMethod', ->
     describe 'should work with single fn', ->
-      app = cichorium()
-      agent = supertest.agent app
-
       before ->
         app.get (req, res) ->
           res.end 'get method'
@@ -86,9 +107,6 @@ describe 'cichorium', ->
           done err
 
     describe 'should work with prefix', ->
-      app = cichorium()
-      agent = supertest.agent app
-
       before ->
         app.get '/path', (req, res) ->
           res.end 'get of /path'
@@ -117,7 +135,7 @@ describe 'cichorium', ->
           res.text.should.be.equal 'post of /path'
           done err
 
-  describe 'handle', ->
+  describe.skip 'handle', ->
     it 'should break when error', (done) ->
       app = cichorium()
       agent = supertest.agent app

@@ -1,20 +1,10 @@
 describe 'request', ->
-  cichorium = require '../index'
-
-  describe 'param', ->
-    it 'pending'
-
-  describe 'ip', ->
+  describe '#ip', ->
     it 'should be loopback address', (done) ->
-      app = cichorium()
+      app = new Cichorium()
 
       app.use (req, res) ->
-        expect(
-          req.ip == '127.0.0.1' or
-          req.ip == '::ffff:127.0.0.1'
-        ).to.be.ok
-        res.end()
+        expect(req.ip() in ['127.0.0.1', '::ffff:127.0.0.1']).to.be.ok
+        res.send()
 
-      supertest app
-      .get '/'
-      .end done
+      test(app).get('/').end done

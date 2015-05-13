@@ -1,4 +1,4 @@
-async = require 'async'
+async = require 'async-q'
 http = require 'http'
 _ = require 'lodash'
 Q = require 'q'
@@ -65,7 +65,7 @@ class Cichorium
 
     Return {Promise} resolve when finished all middlewares.
   ###
-  handle: (req, res) ->
+  handle: (req, res, next) ->
     req = new Request req
     res = new Response res
 
@@ -74,25 +74,24 @@ class Cichorium
         handleRoute(route, params).catch (err) ->
           unless err == nextRouteError
             throw err
-      .done ->
-        unless res.finished
-          res.send 404, "Cannot #{req.method} #{req.url}\n"
-      , errorHandling
 
     handleRoute = (route, params) ->
       if _.isArray route
         handleRoutes route, params
       else if _.isFunction route
-        Q middleware params...
+        Q route params...
       else
         Q.reject new Error 'Route is not a Array or Function'
 
-    errorHandling = (err) ->
+    errorHandling = (err) =>
       async.eachSeries @errorRoutes, (route) ->
         handleRoute(route, [req, res, err]).catch (latestErr) ->
           err = latestErr
 
-    handleRoute @routes, [req, res]
+    handleRoute(@routes, [req, res]).done ->
+      unless res.finished
+        res.send 404, "Cannot #{req.method} #{req.url}"
+    , errorHandling
 
   ###
     Public: Push a error route.
@@ -121,17 +120,25 @@ class Cichorium
   ###
     Public: Shorthand to add routes match specified prefix.
 
-    * `prefix` (optional) {String} prefix of url.
+    * `prefix` (optional) {String} prefix of url, or {RegExp}
     * `routes...` {Array} of {Function} `(req, res) -> Promise`
 
   ###
   use: (prefix, routes...) ->
     if _.isString prefix
-      prefix = (req, res) ->
+      routes.unshift (req, res) ->
         unless req.url[... prefix.length] == prefix
           nextRoute()
 
-    @pushRoute [prefix, routes...]
+    else if _.isRegExp prefix
+      routes.unshift (req, res) ->
+        unless prefix.test req.url
+          nextRoute()
+
+    else
+      routes.unshift prefix
+
+    @pushRoute routes
 
   ###
     Public: Shorthand to add routes match specified method.

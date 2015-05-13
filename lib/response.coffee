@@ -1,9 +1,8 @@
-{ServerResponse} = require 'http'
 _ = require 'lodash'
 
-module.exports = class Response extends ServerResponse
-  constructor: (req) ->
-    _.extend @, req
+module.exports = class Response
+  constructor: (@res) ->
+    _.extend @, res
 
   # res.header name, value
   # res.header object
@@ -15,7 +14,7 @@ module.exports = class Response extends ServerResponse
       headers[name] = value
 
     for name, value of headers
-      @setHeader name, value
+      @res.setHeader name, value
 
   # res.send status, data
   # res.send status
@@ -25,9 +24,9 @@ module.exports = class Response extends ServerResponse
       [status, data] = [null, status]
 
     if status
-      @statusCode = status
+      @res.statusCode = status
 
-    @end data
+    @res.end data
 
   # res.json status, object
   # res.json object

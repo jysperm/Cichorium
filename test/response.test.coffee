@@ -1,4 +1,4 @@
-describe 'response', ->
+describe.skip 'response', ->
   cichorium = require '../index'
 
   describe 'header', ->

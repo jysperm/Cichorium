@@ -1,9 +1,8 @@
-{IncomingMessage} = require 'http'
 _ = require 'lodash'
 
-module.exports = class Request extends IncomingMessage
-  constructor: (req) ->
+module.exports = class Request
+  constructor: (@req) ->
     _.extend @, req
 
   ip: ->
-    return @connection.remoteAddress
+    return @req.connection.remoteAddress
