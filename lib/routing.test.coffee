@@ -1,2 +1,0 @@
-describe 'routing', ->
-  describe '#nextRoute', ->

@@ -34,6 +34,7 @@ class Cichorium
 
     @errorRoutes = [
       (req, res, err) ->
+        console.error err.message, err.stack
         res.send 500, err.message
     ]
 
@@ -69,9 +70,13 @@ class Cichorium
     req = new Request req
     res = new Response res
 
+    executedRoutes = 0
+
     handleRoutes = (routes, params) ->
       async.eachSeries routes, (route) ->
-        handleRoute(route, params).catch (err) ->
+        handleRoute(route, params).then ->
+          executedRoutes++
+        , (err) ->
           unless err == nextRouteError
             throw err
 
@@ -81,7 +86,7 @@ class Cichorium
       else if _.isFunction route
         Q route params...
       else
-        Q.reject new Error 'Route is not a Array or Function'
+        Q.reject new Error 'Route is not Array or Function'
 
     errorHandling = (err) =>
       async.eachSeries @errorRoutes, (route) ->
@@ -89,8 +94,12 @@ class Cichorium
           err = latestErr
 
     handleRoute(@routes, [req, res]).done ->
-      unless res.finished
+      unless executedRoutes
         res.send 404, "Cannot #{req.method} #{req.url}"
+
+      unless res.finished and !socket.writable
+        res.res.end()
+
     , errorHandling
 
   ###
