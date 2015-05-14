@@ -84,3 +84,7 @@ describe 'cichorium', ->
       .end (err, res) ->
         res.text.should.be.equal 'order'
         done err
+
+  describe '#useWithMethod', ->
+
+  describe '#listen', ->

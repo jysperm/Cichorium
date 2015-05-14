@@ -3,8 +3,8 @@ Routing framework based on Promise using CoffeeScript.
 
 ## Usage
 
-    cichorium = require 'cichorium'
-    app = cichorium()
+    Cichorium = require 'cichorium'
+    app = new Cichorium()
 
     app.use '/account', (req, res) ->
       Account.authenticate(req.cookies['token']).then (account) ->
@@ -22,6 +22,5 @@ Routing framework based on Promise using CoffeeScript.
 ## TODO
 
 * param in url, prepare of param
-* custom error handler
 * render
 * send and render with promise

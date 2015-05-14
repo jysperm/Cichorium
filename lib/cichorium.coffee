@@ -12,9 +12,13 @@ httpMethods = [
 ]
 
 nextRouteError = new Error 'Next route'
+errorResolvedError = new Error 'Error resolved'
 
 nextRoute = ->
   throw nextRouteError
+
+errorResolved = ->
+  throw errorResolvedError
 
 ###
   Public: Cichorium
@@ -23,10 +27,10 @@ class Cichorium
   ###
     Public: Constructor
 
-    * `routes` {Array} of:
+    * `routes` {Array} of {Route}, {Route} can be one of:
 
-      * {Array} of routes
-      * {Function} a middleware `(req, res) -> Promise`
+      * {Array} of {Route}.
+      * {Function} represents a middleware `(req, res) -> Promise`.
 
   ###
   constructor: (routes) ->
@@ -39,11 +43,14 @@ class Cichorium
     ]
 
   ###
-    Public: Skip other middlewares on this route.
-
-    This function will throw special exception which can be identified by Cichorium.
+    Public: Skip other middleware on this route.
   ###
   nextRoute: nextRoute
+
+  ###
+    Public: Resolved current error.
+  ###
+  errorResolved: errorResolved
 
   ###
     Public: Listen on specified port.
@@ -64,9 +71,9 @@ class Cichorium
     * `req` {http.IncomingMessage}
     * `res` {http.ServerResponse}
 
-    Return {Promise} resolve when finished all middlewares.
+    Return {Promise} resolve when finished all middleware.
   ###
-  handle: (req, res, next) ->
+  handle: (req, res) ->
     req = new Request req
     res = new Response res
 
@@ -88,11 +95,6 @@ class Cichorium
       else
         Q.reject new Error 'Route is not Array or Function'
 
-    errorHandling = (err) =>
-      async.eachSeries @errorRoutes, (route) ->
-        handleRoute(route, [req, res, err]).catch (latestErr) ->
-          err = latestErr
-
     handleRoute(@routes, [req, res]).done ->
       unless executedRoutes
         res.send 404, "Cannot #{req.method} #{req.url}"
@@ -100,27 +102,34 @@ class Cichorium
       unless res.finished and !socket.writable
         res.res.end()
 
-    , errorHandling
+    , (err) =>
+      async.eachSeries @errorRoutes, (route) ->
+        handleRoute(route, [req, res, err]).catch (latestErr) ->
+          if latestErr == errorResolvedError
+            if err.lastError
+              err = err.lastError
+            else
+              throw latestErr
+          else
+            latestErr.lastError = err
+            err = latestErr
+      .catch (err) ->
+        unless err == errorResolvedError
+          throw err
 
   ###
     Public: Push a error route.
 
-    * `route` Can be one of:
-
-      * {Array} of routes
-      * {Function} a middleware `(req, res, err) -> Promise`
+    * `route` {Route}
 
   ###
   catch: (route) ->
     @errorRoutes.push route
 
   ###
-    Public: Push a route to end of routes.
+    Public: Push a route.
 
-    * `route` Can be one of:
-
-      * {Array} of routes
-      * {Function} a middleware `(req, res) -> Promise`
+    * `route` {Route}
 
   ###
   pushRoute: (route) ->
@@ -129,8 +138,8 @@ class Cichorium
   ###
     Public: Shorthand to add routes match specified prefix.
 
-    * `prefix` (optional) {String} prefix of url, or {RegExp}
-    * `routes...` {Array} of {Function} `(req, res) -> Promise`
+    * `prefix` (optional) {String} or {RegExp} match url.
+    * `route...` {Route}
 
   ###
   use: (prefix, routes...) ->
@@ -152,9 +161,9 @@ class Cichorium
   ###
     Public: Shorthand to add routes match specified method.
 
-    * `method` {String} or {Array} of {String}.
-    * `prefix` (optional) {String} prefix of url.
-    * `routes...` {Array} of {Function} `(req, res) -> Promise`
+    * `method` {String} or {Array}.
+    * `prefix` (optional) {String} or {RegExp}.
+    * `route...` {Route}
 
   ###
   useWithMethod: (method, routes...) ->
