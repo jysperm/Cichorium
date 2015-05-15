@@ -81,9 +81,3 @@ module.exports = class Response
 
     @header 'Location', url
     @send status
-
-  cookie: (name, value, options) ->
-
-  clearCookie: (name, options) ->
-
-  render: (view, view_data) ->

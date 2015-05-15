@@ -1,3 +1,5 @@
+http = require 'http'
+
 describe 'cichorium', ->
   describe '#constructor', ->
     it 'default route', (done) ->
@@ -35,23 +37,23 @@ describe 'cichorium', ->
 
     it 'multiple middlewares', (done) ->
       app = new Cichorium()
-      executed_middlewares = []
+      executed = []
 
       app.use (req, res) ->
         Q.delay(5).then ->
-          executed_middlewares.push 1
+          executed.push 1
 
       app.use (req, res) ->
-        executed_middlewares.push 2
+        executed.push 2
         res.send 'response content'
 
       app.use (req, res) ->
-        executed_middlewares.push 3
+        executed.push 3
 
       test(app).get '/'
       .end (err, res) ->
         res.text.should.be.equal 'response content'
-        executed_middlewares.should.be.eql [1, 2, 3]
+        executed.should.be.eql [1, 2, 3]
         done err
 
   describe '#use with prefix', (done) ->
@@ -85,6 +87,46 @@ describe 'cichorium', ->
         res.text.should.be.equal 'order'
         done err
 
-  describe '#useWithMethod', ->
+  describe '#method', ->
+    app = new Cichorium()
+
+    before ->
+      app.get '/', (req, res) ->
+        res.send 'get'
+
+      app.post '/', (req, res) ->
+        res.send 'post'
+
+      app.put '/', (req, res) ->
+        res.send 'put'
+
+    it 'GET /', (done) ->
+      test(app).get '/'
+      .end (err, res) ->
+        res.text.should.be.equal 'get'
+        done err
+
+    it 'POST /', (done) ->
+      test(app).post '/'
+      .end (err, res) ->
+        res.text.should.be.equal 'post'
+        done err
+
+    it 'PUT /', (done) ->
+      test(app).put '/'
+      .end (err, res) ->
+        res.text.should.be.equal 'put'
+        done err
 
   describe '#listen', ->
+    it 'on tcp port', (done) ->
+      app = new Cichorium()
+
+      app.get '/', (req, res) ->
+        res.send 'index'
+
+      app.listen 19876
+
+      http.get 'http://127.0.0.1:19876', (res) ->
+        res.statusCode.should.be.equal 200
+        done()

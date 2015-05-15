@@ -20,6 +20,10 @@ nextRoute = ->
 errorResolved = ->
   throw errorResolvedError
 
+defaultErrorHandling = (req, res, err) ->
+  console.error err.message, err.stack
+  res.send 500, err.message
+
 ###
   Public: Cichorium
 ###
@@ -35,12 +39,7 @@ class Cichorium
   ###
   constructor: (routes) ->
     @routes = routes ? []
-
-    @errorRoutes = [
-      (req, res, err) ->
-        console.error err.message, err.stack
-        res.send 500, err.message
-    ]
+    @errorRoutes = []
 
   ###
     Public: Skip other middleware on this route.
@@ -95,15 +94,12 @@ class Cichorium
       else
         Q.reject new Error 'Route is not Array or Function'
 
-    handleRoute(@routes, [req, res]).done ->
+    handleRoute(@routes, [req, res]).then ->
       unless executedRoutes
         res.send 404, "Cannot #{req.method} #{req.url}"
 
-      unless res.finished and !socket.writable
-        res.res.end()
-
     , (err) =>
-      async.eachSeries @errorRoutes, (route) ->
+      async.eachSeries [@errorRoutes..., defaultErrorHandling], (route) ->
         handleRoute(route, [req, res, err]).catch (latestErr) ->
           if latestErr == errorResolvedError
             if err.lastError
@@ -116,6 +112,10 @@ class Cichorium
       .catch (err) ->
         unless err == errorResolvedError
           throw err
+    .finally ->
+      unless res.finished and !socket.writable
+        res.res.end()
+    .done()
 
   ###
     Public: Push a error route.
@@ -124,7 +124,7 @@ class Cichorium
 
   ###
   catch: (route) ->
-    @errorRoutes.push route
+    @errorRoutes.push [route]
 
   ###
     Public: Push a route.
@@ -142,40 +142,34 @@ class Cichorium
     * `route...` {Route}
 
   ###
-  use: (prefix, routes...) ->
-    if _.isString prefix
-      routes.unshift (req, res) ->
-        unless req.url[... prefix.length] == prefix
-          nextRoute()
+  use: (routes...) ->
+    @pushRoute routes.map (prefix) ->
+      if _.isString prefix
+        return (req, res) ->
+          unless req.url[... prefix.length] == prefix
+            nextRoute()
+      else if _.isRegExp prefix
+        return (req, res) ->
+          unless prefix.test req.url
+            nextRoute()
+      else
+        return prefix
 
-    else if _.isRegExp prefix
-      routes.unshift (req, res) ->
-        unless prefix.test req.url
-          nextRoute()
-
-    else
-      routes.unshift prefix
-
-    @pushRoute routes
-
+httpMethods.forEach (method) ->
   ###
     Public: Shorthand to add routes match specified method.
 
-    * `method` {String} or {Array}.
+    * `method` {String}.
     * `prefix` (optional) {String} or {RegExp}.
     * `route...` {Route}
 
   ###
-  useWithMethod: (method, routes...) ->
+  Cichorium::[method.toLowerCase()] = (routes...) ->
     routes.unshift (req, res) ->
       unless req.method.toUpperCase() == method.toUpperCase()
         nextRoute()
 
-    @use routes
-
-httpMethods.forEach (method) ->
-  Cichorium::[method.toLowerCase()] = ->
-    @useWithMethod method, arguments...
+    @use routes...
 
 module.exports = _.extend Cichorium,
   nextRoute: nextRoute

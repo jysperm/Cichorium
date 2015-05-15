@@ -1,6 +1,6 @@
 {
   "name": "cichorium",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Routing framework based on Promise using CoffeeScript",
   "homepage": "https://github.com/jysperm/Cichorium",
   "license": "MIT",
